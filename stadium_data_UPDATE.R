@@ -45,3 +45,23 @@ stadium_data = stadium_data %>%
          stadium = if_else(season==2012 & venue_full_name %in% c("Caesars Superdome","Georgia Dome","The Dome at America's Center"),1,stadium),
          stadium = if_else(season==2011 & grepl("HOUSTON|SAN ANTONIO",notes_headline),1,stadium)) %>% 
   filter(stadium==1)
+
+stadium_data = stadium_data %>% 
+  mutate(type = if_else(season!=2021 & grepl("FINAL FOUR|NATIONAL CHAMPIONSHIP|Final Four|National Championship",
+                                           notes_headline),"Full","Half"))
+
+allboxes = data.frame()
+for(i in c(1:75)){
+  boxes = hoopR::espn_mbb_team_box(stadium_data$game_id[i])
+  boxes$type = stadium_data$type[i]
+  allboxes = bind_rows(allboxes,boxes)
+}
+
+summary = allboxes %>% 
+  group_by(type) %>% 
+  summarise(games = n()/2,
+            three_m = sum(three_point_field_goals_made),
+            three_a = sum(three_point_field_goals_attempted),
+            pct = three_m/three_a)
+
+
